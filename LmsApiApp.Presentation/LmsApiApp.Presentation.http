@@ -1,0 +1,6 @@
+@LmsApiApp.Presentation_HostAddress = http://localhost:5126
+
+GET {{LmsApiApp.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
