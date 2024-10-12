@@ -11,7 +11,7 @@ namespace LmsApiApp.Application.Dtos.AssignmentDtos
     {
         public int AssignmentId { get; set; }
         public string SubmissionContent { get; set; }
-        public string MediaUrl { get; set; }  // Yüklenen medya dosyasının URL'si
+        public string MediaUrl { get; set; }  
         public string UserId { get; set; }
         public double Grade { get; set; }
 

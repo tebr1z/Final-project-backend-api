@@ -13,14 +13,14 @@ namespace LmsApiApp.Core.Entities
         public int Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public string Img { get; set; }
+        public string? Img { get; set; }
         public ICollection<Assignment> Assignments { get; set; }
         public ICollection<Test> Tests { get; set; }
 
         public int? GroupId { get; set; }
-        public Group Group { get; set; }
-        public string UserId { get; set; }
-        public User User { get; set; }
+        public Group? Group { get; set; }
+        public string? UserId { get; set; }
+        public User? User { get; set; }
         public virtual ICollection<CourseStudent> CourseStudents { get; set; }
 
         public  DateTime CreatedDate { get; set; }
@@ -29,7 +29,11 @@ namespace LmsApiApp.Core.Entities
         public virtual ICollection<CourseTeacher> CourseTeachers { get; set; }
 
         public bool IsDelete { get; set; }
-
+        public Course()
+        {
+            CourseStudents = new List<CourseStudent>();
+            CourseTeachers = new List<CourseTeacher>();
+        }
     }
 
 }

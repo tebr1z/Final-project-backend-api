@@ -9,7 +9,7 @@ namespace LmsApiApp.Application.Dtos.AssignmentDtos
     public class TeacherGradeDto
     {
         public double Grade { get; set; }
-        public string TeacherFeedback { get; set; }  // Öğretmen cevabı
+        public string TeacherFeedback { get; set; }  
     }
 
 

@@ -1,4 +1,5 @@
-﻿using LmsApiApp.Application.Interfaces;
+﻿using LmsApiApp.Application.Dtos.CourseDtos;
+using LmsApiApp.Application.Interfaces;
 using LmsApiApp.Core.Entities;
 using LmsApiApp.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,34 @@ namespace LmsApiApp.Application.Repositories
         {
             _context.Courses.Remove(course);
             await _context.SaveChangesAsync();
+        }
+
+
+        public async Task<IEnumerable<CourseDto>> GetCoursesByUserAsync(string userId)
+        {
+            return await _context.Courses
+                .Where(c => c.UserId == userId)
+                .Select(c => new CourseDto
+                {
+                 
+                    Title = c.Title,
+                    Description = c.Description,
+                    Img = c.Img
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<CourseDto>> GetCoursesByGroupAsync(int groupId) // Eksik metot burada implement ediliyor
+        {
+            return await _context.Courses
+                .Where(c => c.GroupId == groupId)
+                .Select(c => new CourseDto
+                {
+                    Title = c.Title,
+                    Description = c.Description,
+                    Img = c.Img
+                })
+                .ToListAsync();
         }
     }
 }

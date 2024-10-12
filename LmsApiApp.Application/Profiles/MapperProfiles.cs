@@ -12,8 +12,18 @@ namespace LmsApiApp.Application.Profiles
     {
         public MapperProfiles()
         {
+            CreateMap<Course, CourseDto>()
+      .ForMember(dest => dest.UserIds, opt => opt.MapFrom(src => src.CourseTeachers.Select(ct => ct.UserId).ToList()))
+      .ForMember(dest => dest.CourseStudents, opt => opt.MapFrom(src => src.CourseStudents.Select(cs => cs.UserId).ToList()))  // Burada UserId kullanılıyor
+      .ForMember(dest => dest.CourseTeachers, opt => opt.MapFrom(src => src.CourseTeachers.Select(ct => ct.UserId).ToList()))  // Burada UserId kullanılıyor
+      .ReverseMap();
 
-            CreateMap<Course, CourseDto>().ReverseMap();
+
+            // Diğer dönüşümler
+            CreateMap<Group, GroupDto>()
+                .ForMember(dest => dest.CourseIds, opt => opt.MapFrom(src => src.Courses.Select(c => c.Id)));
+
+          
 
             CreateMap<Group, GroupDto>()
                 .ForMember(dest => dest.CourseIds, opt => opt.MapFrom(src => src.Courses.Select(c => c.Id)));

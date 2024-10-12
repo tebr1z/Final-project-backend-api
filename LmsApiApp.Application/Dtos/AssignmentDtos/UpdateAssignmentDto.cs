@@ -12,10 +12,10 @@ namespace LmsApiApp.Application.Dtos.AssignmentDtos
         public string Description { get; set; }
         public int CourseId { get; set; }
         public DateTime Deadline { get; set; }
-        public string? MediaUrl { get; set; }  // Opsiyonel hale getirildi
+        public string? MediaUrl { get; set; } 
         public string UserId { get; set; }
         public bool IsResubmitted { get; set; }
-        public int? Grade { get; set; } // Öğretmen tarafından verilecek not
+        public int? Grade { get; set; } 
 
     }
 
