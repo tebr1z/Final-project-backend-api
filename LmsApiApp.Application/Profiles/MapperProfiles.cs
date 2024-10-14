@@ -4,6 +4,7 @@ using AutoMapper;
 using LmsApiApp.Application.Dtos.AssignmentDtos;
 using LmsApiApp.Application.Dtos.CourseDtos;
 using LmsApiApp.Application.Dtos.GroupDtos;
+using LmsApiApp.Application.Dtos.UserDtos;
 using LmsApiApp.Core.Entities;
 
 namespace LmsApiApp.Application.Profiles
@@ -14,20 +15,12 @@ namespace LmsApiApp.Application.Profiles
         {
             CreateMap<Course, CourseDto>()
       .ForMember(dest => dest.UserIds, opt => opt.MapFrom(src => src.CourseTeachers.Select(ct => ct.UserId).ToList()))
-      .ForMember(dest => dest.CourseStudents, opt => opt.MapFrom(src => src.CourseStudents.Select(cs => cs.UserId).ToList()))  // Burada UserId kullanılıyor
-      .ForMember(dest => dest.CourseTeachers, opt => opt.MapFrom(src => src.CourseTeachers.Select(ct => ct.UserId).ToList()))  // Burada UserId kullanılıyor
+    // Burada UserId kullanılıyor
       .ReverseMap();
 
 
             // Diğer dönüşümler
-            CreateMap<Group, GroupDto>()
-                .ForMember(dest => dest.CourseIds, opt => opt.MapFrom(src => src.Courses.Select(c => c.Id)));
-
-          
-
-            CreateMap<Group, GroupDto>()
-                .ForMember(dest => dest.CourseIds, opt => opt.MapFrom(src => src.Courses.Select(c => c.Id)));
-
+     
             CreateMap<Assignment, AssignmentDto>()
                        .ReverseMap();
             CreateMap<UpdateAssignmentDto, Assignment>()
@@ -43,6 +36,8 @@ namespace LmsApiApp.Application.Profiles
             CreateMap<AssignmentSubmission, AssignmentSubmissionResponseDto>()
         .ForMember(dest => dest.Grade, opt => opt.MapFrom(src => src.Grade));
 
+            CreateMap<RegisterDto, User>()
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName));
         }
     }
 }

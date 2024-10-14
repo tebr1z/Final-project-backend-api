@@ -14,7 +14,7 @@ namespace LmsApiApp.Application.Implementations
         public void SendEmail(List<string> emails, string subject, string body)
         {
             MailMessage mailMessage = new MailMessage();
-            mailMessage.From = new MailAddress("tabrizyh@code.edu.az", "Lawyer AI");
+            mailMessage.From = new MailAddress("tabrizyh@code.edu.az", "Lms APP");
             foreach (var email in emails)
             {
                 mailMessage.To.Add(email);

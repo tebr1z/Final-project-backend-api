@@ -4,6 +4,7 @@ using LmsApiApp.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LmsApiApp.DataAccess.Migrations
 {
     [DbContext(typeof(LmsApiDbContext))]
-    partial class LmsApiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241014110550_Identity")]
+    partial class Identity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -139,6 +142,7 @@ namespace LmsApiApp.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("StudentId1")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -169,6 +173,7 @@ namespace LmsApiApp.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("SenderId1")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("SentAt")
@@ -337,6 +342,7 @@ namespace LmsApiApp.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("CreatedById1")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Description")
@@ -555,6 +561,7 @@ namespace LmsApiApp.DataAccess.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("DeletedBy")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
@@ -567,22 +574,15 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Property<int>("ForumMessagesCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("FullName")
+                    b.Property<string>("Img")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Img")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsBanned")
+                    b.Property<bool>("IsBanned")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -598,9 +598,6 @@ namespace LmsApiApp.DataAccess.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateTime?>("OtpExpiryTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -609,9 +606,6 @@ namespace LmsApiApp.DataAccess.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("ResetPasswordOtp")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -622,10 +616,11 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime?>("UpdatedDate")
+                    b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserName")
+                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -672,6 +667,7 @@ namespace LmsApiApp.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId1")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -704,6 +700,7 @@ namespace LmsApiApp.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId1")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -899,7 +896,9 @@ namespace LmsApiApp.DataAccess.Migrations
 
                     b.HasOne("LmsApiApp.Core.Entities.User", "Student")
                         .WithMany()
-                        .HasForeignKey("StudentId1");
+                        .HasForeignKey("StudentId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Course");
 
@@ -914,7 +913,9 @@ namespace LmsApiApp.DataAccess.Migrations
 
                     b.HasOne("LmsApiApp.Core.Entities.User", "Sender")
                         .WithMany()
-                        .HasForeignKey("SenderId1");
+                        .HasForeignKey("SenderId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Sender");
                 });
@@ -1011,7 +1012,9 @@ namespace LmsApiApp.DataAccess.Migrations
                 {
                     b.HasOne("LmsApiApp.Core.Entities.User", "CreatedBy")
                         .WithMany()
-                        .HasForeignKey("CreatedById1");
+                        .HasForeignKey("CreatedById1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("CreatedBy");
                 });
@@ -1084,7 +1087,9 @@ namespace LmsApiApp.DataAccess.Migrations
                 {
                     b.HasOne("LmsApiApp.Core.Entities.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId1");
+                        .HasForeignKey("UserId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -1093,7 +1098,9 @@ namespace LmsApiApp.DataAccess.Migrations
                 {
                     b.HasOne("LmsApiApp.Core.Entities.User", "User")
                         .WithMany("Badges")
-                        .HasForeignKey("UserId1");
+                        .HasForeignKey("UserId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

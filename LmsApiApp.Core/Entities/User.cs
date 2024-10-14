@@ -5,21 +5,25 @@ namespace LmsApiApp.Core.Entities
     public class User : IdentityUser
 
     {
-        public int Id { get; set; } // Birincil anahtar
-        public string UserName { get; set; } // Kullanıcı adı
+   
+    
+        public string FullName { get; set; }
+        public string LastName { get; set; }
 
-        public string Img { get; set; } // Kullanıcı rolü (Öğretmen, Öğrenci, Mentor, vb.)
-        public bool IsDeleted { get; set; } // Kullanıcı silinmiş mi?
-        public DateTime? DeletedAt { get; set; } // Kullanıcının silindiği tarih
-        public string DeletedBy { get; set; } // Kullanıcıyı kimin sildiğini takip eder
-        public bool IsBanned { get; set; } // Kullanıcı yasaklı mı?
-        public DateTime CreatedDate { get; set; } // Kullanıcının oluşturulduğu tarih
-        public DateTime UpdatedDate { get; set; } // Kullanıcının güncellendiği tarih
-        public int TotalScore { get; set; } // Toplam puan (devamlılık, ödevler vb. üzerinden hesaplanır)
-        public int AttendancePercentage { get; set; } // Devamlılık yüzdesi
-        public double ActiveHours { get; set; } // Platformda aktif geçirilen saat
-        public int ForumMessagesCount { get; set; } // Foruma yazılan mesaj sayısı
-        public string VideoChatStatus { get; set; } // WebRTC için video durumu ("Aktif", "Pasif")
+        public string? Img { get; set; } // Kullanıcı rolü (Öğretmen, Öğrenci, Mentor, vb.)
+        public bool IsDeleted { get; set; } = false; // Varsayılan değeri false olarak ayarladık
+        public DateTime? DeletedAt { get; set; } // Nullable
+        public string? DeletedBy { get; set; } // Nullable
+        public bool? IsBanned { get; set; } = false; // Varsayılan değeri false
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // Varsayılan değer
+        public DateTime? UpdatedDate { get; set; } 
+        public int TotalScore { get; set; } = 0; // Varsayılan değeri 0
+        public int AttendancePercentage { get; set; } = 0; // Varsayılan değeri 0
+        public double ActiveHours { get; set; } = 0.0; // Varsayılan değeri 0.0
+        public int ForumMessagesCount { get; set; } = 0; // Varsayılan değeri 0
+        public string VideoChatStatus { get; set; } = "Inactive"; // Varsayılan değer
+        public string? ResetPasswordOtp { get; set; }
+        public DateTime? OtpExpiryTime { get; set; }
 
         // Kullanıcının kazandığı rozetler
         public virtual ICollection<UserBadge> Badges { get; set; }

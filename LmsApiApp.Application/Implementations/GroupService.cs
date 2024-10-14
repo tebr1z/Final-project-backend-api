@@ -1,59 +1,78 @@
-﻿using AutoMapper;
-using LmsApiApp.Application.Dtos.GroupDtos;
-using LmsApiApp.Application.Exceptions;
+﻿using LmsApiApp.Application.Dtos.GroupDtos;
+using LmsApiApp.Application.Dtos.UserDtos;
 using LmsApiApp.Application.Interfaces;
 using LmsApiApp.Core.Entities;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using LmsApiApp.DataAccess.Data;
+using Microsoft.EntityFrameworkCore;
 
-namespace LmsApiApp.Application.Implementations
+namespace LmsApiApp.Application.Services
 {
     public class GroupService : IGroupService
     {
-        private readonly IMapper _mapper;
-        private readonly IGroupRepository _groupRepository;
+        private readonly LmsApiDbContext _context;
 
-        public GroupService(IMapper mapper, IGroupRepository groupRepository)
+        public GroupService(LmsApiDbContext context)
         {
-            _mapper = mapper;
-            _groupRepository = groupRepository;
+            _context = context;
         }
 
-        public async Task<List<GroupDto>> GetAllGroupsAsync()
+        public async Task<IEnumerable<Group>> GetAllGroupsAsync()
         {
-            var groups = await _groupRepository.GetAllAsync(); 
-            return _mapper.Map<List<GroupDto>>(groups); 
+            return await _context.Groups.ToListAsync(); // Tüm grupları getir
         }
 
-        public async Task<GroupDto> GetGroupByIdAsync(int id)
+        public async Task<Group> GetGroupByIdAsync(int id)
         {
-            var group = await _groupRepository.GetByIdAsync(id); 
-            if (group == null) throw new GroupNotFoundException(id);
-            return _mapper.Map<GroupDto>(group); 
+            return await _context.Groups.FindAsync(id); // ID'ye göre grup bul
         }
 
-        public async Task AddGroupAsync(GroupDto groupDto)
+        public async Task AddGroupAsync(Group group)
         {
-            var group = _mapper.Map<Group>(groupDto); 
-            await _groupRepository.AddAsync(group); 
+            _context.Groups.Add(group); // Yeni grup ekle
+            await _context.SaveChangesAsync(); // Veritabanına kaydet
         }
 
-        public async Task UpdateGroupAsync(int id, GroupDto groupDto)
+        public async Task UpdateGroupAsync(Group group)
         {
-            var group = await _groupRepository.GetByIdAsync(id); 
-            if (group == null) throw new GroupNotFoundException(id);
-
-            _mapper.Map(groupDto, group); 
-            await _groupRepository.UpdateAsync(group); 
+            _context.Groups.Update(group); // Grup güncelle
+            await _context.SaveChangesAsync(); // Veritabanına kaydet
         }
 
         public async Task DeleteGroupAsync(int id)
         {
-            var group = await _groupRepository.GetByIdAsync(id); 
-            if (group == null) throw new GroupNotFoundException(id);
+            var group = await _context.Groups.FindAsync(id);
+            if (group != null)
+            {
+                _context.Groups.Remove(group); // Grup sil
+                await _context.SaveChangesAsync(); // Veritabanına kaydet
+            }
+        }
+        // Kullanıcıyı gruba eklemek için metod
+        public async Task AddUserToGroupAsync(GroupEnrollment groupEnrollment)
+        {
+            _context.GroupEnrollments.Add(groupEnrollment); // Gruba kullanıcı ekle
+            await _context.SaveChangesAsync(); // Değişiklikleri veritabanına kaydet
+        }
 
-            await _groupRepository.DeleteAsync(group); 
+        public async Task<IEnumerable<GroupWithUsersDto>> GetAllGroupsWithUsersAsync()
+        {
+            var groups = await _context.Groups
+                .Include(g => g.GroupEnrollments) // Grupla ilgili kullanıcı kayıtlarını dahil et
+                .ThenInclude(ge => ge.User) // Her kullanıcı kaydından kullanıcı bilgisine git
+                .ToListAsync();
+
+            // DTO'ya dönüştürme işlemi
+            return groups.Select(g => new GroupWithUsersDto
+            {
+                Id = g.Id,
+                Name = g.Name,
+               
+                Users = g.GroupEnrollments.Select(ge => new UserDto
+                {
+                    Id = ge.User.Id,
+                    Name = ge.User.UserName
+                }).ToList()
+            }).ToList();
         }
     }
 }

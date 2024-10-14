@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using LmsApiApp.Application.Dtos.CourseDtos;
 using LmsApiApp.Application.Interfaces;
+using LmsApiApp.Application.Services;
 using LmsApiApp.Core.Entities;
 using LmsApiApp.DataAccess.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -49,10 +50,6 @@ public class CourseController : ControllerBase
         var courseDto = _mapper.Map<CourseDto>(courseEntity);
         return Ok(courseDto);
     }
-
-
-
-
     [HttpPost]
     public async Task<ActionResult> CreateCourse([FromForm] CourseDto courseDto, IFormFile mediaFile)
     {
@@ -70,15 +67,114 @@ public class CourseController : ControllerBase
 
         try
         {
-            // Kursu ekliyoruz
-            await _courseService.AddCourseAsync(courseDto);
-            return CreatedAtAction(nameof(GetCourse), new { id = courseDto }, courseDto);
+            // Kursu DTO'dan Entity'ye dönüştürüyoruz
+            var courseEntity = _mapper.Map<Course>(courseDto);
+            _context.Courses.Add(courseEntity);
+            await _context.SaveChangesAsync(); // Kursu kaydediyoruz ve Id otomatik atanıyor
+
+            // Eğer GroupId geldiyse, gruptaki kullanıcıları ekleyelim
+            if (courseDto.GroupId.HasValue)
+            {
+                var groupEnrollments = await _context.GroupEnrollments
+                    .Include(e => e.User) // Kullanıcı bilgilerini dahil ediyoruz
+                    .Where(e => e.GroupId == courseDto.GroupId.Value)
+                    .ToListAsync();
+
+                // Eğer gruptaki kullanıcılar yoksa hata döndür
+                if (groupEnrollments == null || !groupEnrollments.Any())
+                {
+                    return NotFound("No enrollments found for this group.");
+                }
+
+                foreach (var enrollment in groupEnrollments)
+                {
+                    var user = enrollment.User;
+                    if (user == null)
+                    {
+                        Console.WriteLine("User is null, skipping...");
+                        continue; // Kullanıcı yoksa, sonraki kullanıcıya geç
+                    }
+
+                    // CourseStudents koleksiyonu yoksa oluştur
+                    if (courseEntity.CourseStudents == null)
+                    {
+                        courseEntity.CourseStudents = new List<CourseStudent>();
+                    }
+
+                    // Öğrenci olarak ekleyin
+                    courseEntity.CourseStudents.Add(new CourseStudent
+                    {
+                        CourseId = courseEntity.Id,
+                        UserId = user.Id
+                    });
+                }
+
+                // Değişiklikleri veritabanına kaydet
+                await _context.SaveChangesAsync();
+            }
+
+            return CreatedAtAction(nameof(GetCourse), new { id = courseEntity.Id }, courseDto);
         }
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message, innerException = ex.InnerException?.Message });
         }
     }
+
+
+    [HttpPost("assign-group-users-to-course/{courseId}/{groupId}")]
+    public async Task<IActionResult> AssignGroupUsersToCourse(int courseId, int groupId)
+    {
+        var course = await _context.Courses
+                                   .Include(c => c.CourseStudents)
+                                   .Include(c => c.CourseTeachers)
+                                   .FirstOrDefaultAsync(c => c.Id == courseId);
+        if (course == null) return NotFound("Course not found.");
+
+        var group = await _context.Groups
+                                  .Include(g => g.GroupEnrollments)
+                                  .ThenInclude(e => e.User)
+                                  .FirstOrDefaultAsync(g => g.Id == groupId);
+
+        if (group == null) return NotFound("Group not found.");
+
+        foreach (var enrollment in group.GroupEnrollments)
+        {
+            var user = enrollment.User;
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Eğer kullanıcı rolü "Teacher" ise CourseTeacher'a ekle
+            if (roles.Contains("Teacher"))
+            {
+                if (!course.CourseTeachers.Any(ct => ct.UserId == user.Id))
+                {
+                    course.CourseTeachers.Add(new CourseTeacher
+                    {
+                        CourseId = courseId,
+                        UserId = user.Id,
+                    });
+                }
+            }
+            // Eğer kullanıcı rolü "Student" ise CourseStudent'a ekle
+            else if (roles.Contains("Student"))
+            {
+                if (!course.CourseStudents.Any(cs => cs.UserId == user.Id))
+                {
+                    course.CourseStudents.Add(new CourseStudent
+                    {
+                        CourseId = courseId,
+                        UserId = user.Id,
+                    });
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(course);
+    }
+
+
+
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCourse(int id, [FromForm] CourseDto courseDto, IFormFile mediaFile)
@@ -115,48 +211,6 @@ public class CourseController : ControllerBase
         {
             return BadRequest(new { error = ex.Message, innerException = ex.InnerException?.Message });
         }
-    }
-
-    [HttpPost("assign-group-users-to-course/{courseId}/{groupId}")]
-    public async Task<IActionResult> AssignGroupUsersToCourse(int courseId, int groupId)
-    {
-        var course = await _context.Courses.FindAsync(courseId);
-        if (course == null) return NotFound("Course not found.");
-
-        var group = await _context.Groups
-            .Include(g => g.GroupEnrollments)
-            .ThenInclude(e => e.User)
-            .FirstOrDefaultAsync(g => g.Id == groupId);
-
-        if (group == null) return NotFound("Group not found.");
-
-        foreach (var enrollment in group.GroupEnrollments)
-        {
-            // Kullanıcıyı course students listesine ekle
-            if (!course.CourseStudents.Any(cs => cs.UserId == enrollment.UserId))
-            {
-                course.CourseStudents.Add(new CourseStudent
-                {
-                    UserId = enrollment.UserId,
-                    CourseId = courseId
-                });
-            }
-        }
-
-        await _context.SaveChangesAsync();
-        return Ok(course);
-    }
-
-    [HttpGet("user-courses/{userId}")]
-    public async Task<IActionResult> GetCoursesByUserId(string userId)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return NotFound("User not found");
-
-        var courses = await _courseService.GetCoursesByUserIdAsync(userId);
-        if (!courses.Any()) return NotFound("No courses found for this user");
-
-        return Ok(courses);
     }
 
 
@@ -260,18 +314,6 @@ public class CourseController : ControllerBase
 
 
 
-    [HttpGet("user/{userId}/courses")]
-    public async Task<IActionResult> GetUserCourses(string userId)
-    {
-        // Kullanıcının aldığı kursları getiriyoruz
-        var courses = await _courseService.GetCoursesByUserIdAsync(userId);
-        if (!courses.Any())
-        {
-            return NotFound("Bu kullanıcıya ait kurs bulunamadı.");
-        }
-
-        return Ok(courses);
-    }
 
     [HttpGet("GetCoursesByUser/{userId}")]
     public async Task<IActionResult> GetCoursesByUser(string userId)
@@ -284,34 +326,79 @@ public class CourseController : ControllerBase
         return Ok(courses);
     }
 
-    
-    [HttpGet("GetCoursesByGroup/{groupId}")]
-    public async Task<IActionResult> GetCoursesByGroup(int groupId)
-    {
-        var courses = await _courseService.GetCoursesByGroupAsync(groupId);
-        if (courses == null || !courses.Any())
-        {
-            return NotFound("Gruba ait kurs bulunamadı.");
-        }
-        return Ok(courses);
-    }
-    [HttpGet("GetAllCourses")]
-    [Authorize(Roles = "So,MasterAdmin")] 
-    public async Task<IActionResult> GetAllCourses()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        var roles = await _userManager.GetRolesAsync(user);
 
-        // Eğer kullanıcı So veya MasterAdmin değilse, hata döndür
-        if (!roles.Contains("So") && !roles.Contains("MasterAdmin"))
+
+    [HttpGet("GetAllCoursesWithUsers")]
+    public async Task<IActionResult> GetAllCoursesWithUsers()
+    {
+        // Tüm kursları ve ilişkili öğrencileri ve öğretmenleri alıyoruz
+        var courses = await _context.Courses
+            .Include(c => c.CourseStudents)
+                .ThenInclude(cs => cs.Student) // Öğrenci bilgilerini dahil et
+            .Include(c => c.CourseTeachers)
+                .ThenInclude(ct => ct.Teacher) // Öğretmen bilgilerini dahil et
+            .ToListAsync();
+
+        // DTO'ya dönüştürme
+        var courseDtos = courses.Select(course => new GetCourseDto
         {
-            return Forbid("Bu işlemi gerçekleştirmek için yetkiniz yok.");
+            Id = course.Id,
+            Name = course.Description,
+            Img = course.Img,
+            CourseStudents = course.CourseStudents.Select(cs => new CourseStudentDto
+            {
+                UserId = cs.UserId,
+                UserName = cs.Student.UserName // Kullanıcının adı
+            }).ToList(),
+            CourseTeachers = course.CourseTeachers.Select(ct => new CourseTeacherDto
+            {
+                UserId = ct.UserId,
+                UserName = ct.Teacher.UserName // Kullanıcının adı
+            }).ToList()
+        }).ToList();
+
+        return Ok(courseDtos);
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteCourse(int id)
+    {
+        // Kursu veritabanından bul
+        var courseEntity = await _context.Courses
+            .Include(c => c.CourseStudents)
+            .Include(c => c.CourseTeachers)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        // Eğer kurs bulunamazsa 404 döndür
+        if (courseEntity == null)
+        {
+            return NotFound("Course not found.");
         }
 
-        // Kullanıcı uygun rollere sahipse tüm kursları getir
-        var courses = await _courseService.GetAllCoursesAsync();
-        return Ok(courses);
+        // Fotoğraf dosyasını sil
+        if (!string.IsNullOrEmpty(courseEntity.Img))
+        {
+            // FileUploadService nesnesini oluştur
+            var fileUploadService = new FileUploadService();
+            await fileUploadService.DeleteFileAsync(courseEntity.Img); // Fotoğrafı sil
+        }
+
+        // Tüm CourseStudent kayıtlarını sil
+        _context.CourseStudents.RemoveRange(courseEntity.CourseStudents);
+
+        // Tüm CourseTeacher kayıtlarını sil
+        _context.CourseTeachers.RemoveRange(courseEntity.CourseTeachers);
+
+        // Kursu sil
+        _context.Courses.Remove(courseEntity);
+
+        // Değişiklikleri veritabanına kaydet
+        await _context.SaveChangesAsync();
+
+        // Başarılı silme işlemi için 204 No Content döndür
+        return NoContent();
     }
+
+
 }
 
 

@@ -45,11 +45,7 @@ namespace LmsApiApp.Controllers
                 return NotFound("User not found.");
             }
 
-            // Kullanıcının yetkilerini kontrol ediyoruz
-            if (!await _assignmentService.CanSetDeadlineAsync(user))
-            {
-                return Unauthorized("Only teachers and master admins can create assignments.");
-            }
+         
 
             // DTO'yu model'e dönüştürme
             var assignment = _mapper.Map<Assignment>(assignmentDto);

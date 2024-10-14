@@ -1,27 +1,44 @@
-﻿using LmsApiApp.Application.Interfaces;
+﻿using AutoMapper;
+using LmsApiApp.Application.Interfaces;
 using LmsApiApp.Application.Dtos.GroupDtos;
 using LmsApiApp.Core.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace LmsApiApp.Presentation.Controllers
 {
+   
     [Route("api/[controller]")]
     [ApiController]
     public class GroupController : ControllerBase
     {
         private readonly IGroupService _groupService;
+        private readonly IMapper _mapper;
 
-        public GroupController(IGroupService groupService)
+        public GroupController(IGroupService groupService, IMapper mapper)
         {
             _groupService = groupService;
+            _mapper = mapper;
+        }
+        [HttpGet("with-users")]
+        public async Task<ActionResult<IEnumerable<GroupWithUsersDto>>> GetGroupsWithUsers()
+        {
+            var groups = await _groupService.GetAllGroupsWithUsersAsync();
+            return Ok(groups);
         }
 
-        // GET: api/Group
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<GroupDto>>> GetGroups()
+        // POST: api/Group
+        [HttpPost]
+        [Authorize(Roles = "Admin")] // Sadece Admin rolü ekleyebilir
+        public async Task<ActionResult> CreateGroup([FromBody] GroupDto groupDto)
         {
-            var groups = await _groupService.GetAllGroupsAsync();
-            return Ok(groups);
+            // DTO'dan Entity'e mapping
+            var groupEntity = _mapper.Map<Group>(groupDto);
+
+            await _groupService.AddGroupAsync(groupEntity);
+
+            return CreatedAtAction(nameof(GetGroup), new { id = groupEntity.Id }, groupEntity);
         }
 
         // GET: api/Group/5
@@ -35,50 +52,77 @@ namespace LmsApiApp.Presentation.Controllers
                 return NotFound();
             }
 
-            return Ok(group);
+            // Entity'den DTO'ya mapping
+            var groups = await _groupService.GetAllGroupsWithUsersAsync();
+            return Ok(groups);
+           
         }
 
-        // POST: api/Group
-        [HttpPost]
-        public async Task<ActionResult> CreateGroup([FromBody] GroupDto groupDto)
+        [HttpPost("users")]
+        // Sadece Admin rolü kullanıcı ekleyebilir
+        public async Task<ActionResult> AddUserToGroup([FromBody] GroupEnrollmentDto groupEnrollmentDto)
         {
-            await _groupService.AddGroupAsync(groupDto);
-            return CreatedAtAction(nameof(GetGroup), new { id = groupDto.Id }, groupDto);
-        }
-
-        // PUT: api/Group/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateGroup(int id, [FromBody] GroupDto groupDto)
-        {
-            if (id != groupDto.Id)
+            var groupEnrollment = new GroupEnrollment
             {
-                return BadRequest("Group ID mismatch");
+                UserId = groupEnrollmentDto.UserId,
+                GroupId = groupEnrollmentDto.GroupId,
+                EnrolledDate = DateTime.Now
+            };
+
+            await _groupService.AddUserToGroupAsync(groupEnrollment);
+
+            return Ok("Kullanıcı gruba başarıyla eklendi.");
+        }
+
+        [HttpPost("{groupId}/users/bulk")]
+        public async Task<ActionResult> AddMultipleUsersToGroup(int groupId, [FromBody] GroupEnrollmentBulkDto groupEnrollmentBulkDto)
+        {
+            foreach (var userId in groupEnrollmentBulkDto.UserIds)
+            {
+                var groupEnrollment = new GroupEnrollment
+                {
+                    UserId = userId,
+                    GroupId = groupId,
+                    EnrolledDate = DateTime.Now
+                };
+
+                await _groupService.AddUserToGroupAsync(groupEnrollment);
             }
 
-            await _groupService.UpdateGroupAsync(id, groupDto);
-            return NoContent();
+            return Ok("Kullanıcılar başarıyla gruba eklendi.");
         }
 
-        // DELETE: api/Group/5
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditGroup(int id, [FromBody] GroupEditDto groupEditDto)
+        {
+            var group = await _groupService.GetGroupByIdAsync(id);
+            if (group == null)
+            {
+                return NotFound("Grup bulunamadı.");
+            }
+
+            group.Name = groupEditDto.Name;
+             group.UpdatedDate = DateTime.Now;
+
+            await _groupService.UpdateGroupAsync(group);
+
+            return Ok("Grup başarıyla güncellendi.");
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGroup(int id)
         {
-            await _groupService.DeleteGroupAsync(id);
-            return NoContent();
-        }
-
-        // SOFT DELETE: api/Group/softdelete/5
-        [HttpPut("softdelete/{id}")]
-        public async Task<IActionResult> SoftDeleteGroup(int id)
-        {
             var group = await _groupService.GetGroupByIdAsync(id);
-            if (group == null) return NotFound();
+            if (group == null)
+            {
+                return NotFound("Grup bulunamadı.");
+            }
 
-            // Soft delete için grubu "silinmiş" işaretleyin
-            group.IsDelete = true;  // Group'a IsDeleted alanı eklenmiş olmalı
-            await _groupService.UpdateGroupAsync(id, group);
+            await _groupService.DeleteGroupAsync(id);
 
-            return NoContent();
+            return Ok("Grup başarıyla silindi.");
         }
+
     }
 }
