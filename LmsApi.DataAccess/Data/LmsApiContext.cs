@@ -24,7 +24,7 @@ namespace LmsApiApp.DataAccess.Data
 
         public DbSet<Test> Tests { get; set; }
 
-
+        public DbSet<Question> Questions { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
 
 
@@ -47,6 +47,8 @@ namespace LmsApiApp.DataAccess.Data
 
 
         public DbSet<UserActivity> UserActivities { get; set; }
+        public DbSet<Message> messages { get; set; }
+
 
 
         public DbSet<Settings> Settings { get; set; }
@@ -118,9 +120,19 @@ namespace LmsApiApp.DataAccess.Data
                 .WithMany(u => u.CourseTeachers)
                 .HasForeignKey(ct => ct.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-        
 
-            // ON DELETE NO ACTION
+            // Message tablosu ve ilişkiler
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()  // Kullanıcıların mesaj koleksiyonu yok
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);  // Restrict, cascade'i devre dışı bırakır.
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany()  // Kullanıcıların mesaj koleksiyonu yok
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
 

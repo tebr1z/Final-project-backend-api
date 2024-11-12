@@ -10,7 +10,8 @@
         public int Score { get; set; }
         public bool IsReshuffled { get; set; }  // Indicates if the answers were reshuffled
         public DateTime CompletedAt { get; set; }
-        public string MediaUrl{ get; set; }
+        public string? MediaUrl{ get; set; }
+        public bool IsApprovedByTeacher { get; set; }
     }
 
 }

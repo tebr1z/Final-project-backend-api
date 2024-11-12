@@ -24,5 +24,7 @@ namespace LmsApiApp.Presentation.Controllers
             var users = await _userService.GetUsersAsync(search);
             return Ok(users);
         }
+
+
     }
 }

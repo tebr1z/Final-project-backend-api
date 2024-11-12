@@ -29,7 +29,7 @@ public class AssignmentSubmissionController : ControllerBase
     [HttpPost("submit")]
     public async Task<IActionResult> SubmitMedia([FromForm] AssignmentSubmissionDto submissionDto, IFormFile mediaFile)
     {
-        // DTO'dan gelen UserId'yi alıyoruz
+    
         var userId = submissionDto.UserId;
 
         if (string.IsNullOrEmpty(userId))
@@ -37,41 +37,39 @@ public class AssignmentSubmissionController : ControllerBase
             return BadRequest("UserId is required.");
         }
 
-        // UserManager ile UserId'yi kullanarak kullanıcıyı buluyoruz
+      
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
         {
             return NotFound("User not found.");
         }
 
-        // Kullanıcının en son gönderdiği ödevi buluyoruz
+    
         var latestSubmission = await _context.AssignmentSubmissions
             .Where(s => s.AssignmentId == submissionDto.AssignmentId && s.UserId == userId)
             .OrderByDescending(s => s.SubmittedAt)
             .FirstOrDefaultAsync();
 
-        // Eğer en son gönderilen ödevin puanı 50 veya daha büyükse tekrar gönderime izin vermeyin
+     
         if (latestSubmission != null && latestSubmission.Grade.HasValue && latestSubmission.Grade >= 50)
         {
             return BadRequest("You cannot resubmit this assignment because the grade is 50 or higher.");
         }
 
-        // Yeni ödev teslimini kaydediyoruz
+    
         var submission = _mapper.Map<AssignmentSubmission>(submissionDto);
         submission.SubmittedAt = DateTime.UtcNow;
 
-        // Eğer medya dosyası yüklendiyse, dosyayı yükleyip URL'sini kaydediyoruz
         if (mediaFile != null)
         {
             var mediaUrl = await _fileUploadService.UploadFileAsync(mediaFile);
             submission.MediaUrl = mediaUrl;
         }
 
-        // Yeni gönderimi veritabanına ekliyoruz
         _context.AssignmentSubmissions.Add(submission);
         await _context.SaveChangesAsync();
 
-        // Yanıt DTO'sunu hazırlıyoruz
+     
         var responseDto = _mapper.Map<AssignmentSubmissionResponseDto>(submission);
 
         return Ok(responseDto);
@@ -81,16 +79,15 @@ public class AssignmentSubmissionController : ControllerBase
 
 
 
-    // Tüm kullanıcıların Grade ortalamasını hesapla
     [HttpGet("average-grade/{assignmentId}")]
     public async Task<IActionResult> GetAverageGradeForAssignment(int assignmentId)
     {
-        // İlgili ödev için tüm kullanıcıların en son gönderimlerini alıyoruz
+       
         var latestSubmissions = await _context.AssignmentSubmissions
             .Where(s => s.AssignmentId == assignmentId)
             .GroupBy(s => s.UserId)
-            .Select(g => g.OrderByDescending(s => s.SubmittedAt).FirstOrDefault())  // En son gönderimi alıyoruz
-            .Where(s => s.Grade.HasValue)  // Yalnızca puan verilmiş gönderimleri alıyoruz
+            .Select(g => g.OrderByDescending(s => s.SubmittedAt).FirstOrDefault())  
+            .Where(s => s.Grade.HasValue)  
             .ToListAsync();
 
         if (!latestSubmissions.Any())
@@ -98,10 +95,9 @@ public class AssignmentSubmissionController : ControllerBase
             return NotFound("No submissions found for this assignment.");
         }
 
-        // Ortalama puanı hesaplıyoruz
+      
         var averageGrade = latestSubmissions.Average(s => s.Grade.Value);
 
-        // Ödevin Grade alanını güncelliyoruz
         var assignment = await _context.Assignments.FindAsync(assignmentId);
         if (assignment != null)
         {

@@ -9,11 +9,10 @@ using LmsApiApp.Application.Services;
 using LmsApiApp.Application.Settings;
 using LmsApiApp.Core.Entities;
 using LmsApiApp.DataAccess.Data;
+using LmsApiApp.Presentation.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -35,13 +34,15 @@ namespace LmsApiApp.Presentation
                  options.AddPolicy("AllowAll",
                      builder =>
                      {
-                         builder.AllowAnyOrigin()
-                                .AllowAnyMethod()
-                                .AllowAnyHeader();
+                         builder.WithOrigins("http://141.98.112.193", "https://hashimovtabriz.com.tr", "http://localhost:5500")
+
+                            .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
                      });
              });
 
-            // Add services to the container
+
             services.AddControllers();
 
 
@@ -50,7 +51,7 @@ namespace LmsApiApp.Presentation
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
-            // DbContext configuration
+           
             services.AddDbContext<LmsApiDbContext>(opt =>
              {
                  opt.UseSqlServer(config.GetConnectionString("DefaultConnection"));
@@ -80,7 +81,7 @@ namespace LmsApiApp.Presentation
             })
 
 
-                .AddJwtBearer(options =>
+            .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -93,6 +94,31 @@ namespace LmsApiApp.Presentation
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"])),
                     ClockSkew = TimeSpan.Zero
                 };
+
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+
+                      
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+                        {
+                            context.Token = accessToken; 
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+
+
+
+
+
+
+
+
             });
 
 
@@ -145,15 +171,18 @@ namespace LmsApiApp.Presentation
             services.AddScoped<ICourseServices, CourseService>();
             services.AddScoped<ICourseRepository, CourseRepository>();
             services.AddScoped<IFileUploadService, FileUploadService>();
-
+            services.AddScoped<ITestService, TestService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IAssignmentService, AssignmentService>();
-
+            services.AddScoped<ITestRepository, TestRepository>();
             services.Configure<JwtSetting>(config.GetSection("Jwt"));
-
-
-
+            services.AddScoped<IQuestionRepository, QuestionRepository>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ISignalRService, SignalRService>();
+            services.AddScoped<IMessageService, MessageService>();
+            services.AddScoped<IMessageRepository, MessageRepository>();
+            services.AddSignalR();
             // AutoMapper configuration
             services.AddAutoMapper(typeof(MapperProfiles));
             services.AddAutoMapper(typeof(GroupProfile));

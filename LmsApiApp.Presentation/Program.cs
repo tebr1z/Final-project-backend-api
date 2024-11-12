@@ -1,6 +1,6 @@
 using LmsApiApp.Application.Exceptions;
 using LmsApiApp.Presentation;
-using FluentValidation;
+using LmsApiApp.Presentation.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -10,7 +10,26 @@ builder.Services.Register(config);
 
 
 var app = builder.Build();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.UseCors("AllowAll");
+app.MapHub<TimerHub>("/testHub");
+
+app.MapHub<ChatHub>("/chathub");
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -21,7 +40,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error"); // Hata sayfasý
+    app.UseExceptionHandler("/Home/Error"); 
     app.UseHsts();
 }
 
@@ -30,6 +49,5 @@ app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.Run();

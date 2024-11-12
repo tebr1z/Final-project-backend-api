@@ -38,6 +38,7 @@ namespace LmsApiApp.Core.Entities
         // Role-based control: User roles (Student, Teacher, etc.)
         public ICollection<IdentityUserRole<string>> UserRoles { get; set; }
 
-
+        public DateTime LastActive { get; set; } = DateTime.Now;  // Kullanıcının son aktif zamanı
+        public bool IsOnline { get; set; } = false;
     }
 }

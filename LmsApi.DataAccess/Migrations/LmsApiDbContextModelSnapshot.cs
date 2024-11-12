@@ -22,6 +22,31 @@ namespace LmsApiApp.DataAccess.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("LmsApiApp.Core.Entities.Answer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("Answer");
+                });
+
             modelBuilder.Entity("LmsApiApp.Core.Entities.Assignment", b =>
                 {
                     b.Property<int>("Id")
@@ -414,6 +439,73 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.ToTable("GroupEnrollments");
                 });
 
+            modelBuilder.Entity("LmsApiApp.Core.Entities.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ReceiverId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("messages");
+                });
+
+            modelBuilder.Entity("LmsApiApp.Core.Entities.Question", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TestId");
+
+                    b.ToTable("Questions");
+                });
+
             modelBuilder.Entity("LmsApiApp.Core.Entities.Settings", b =>
                 {
                     b.Property<int>("Id")
@@ -463,12 +555,18 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDelete")
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTimed")
                         .HasColumnType("bit");
 
                     b.Property<string>("MediaUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeSpan>("TestDuration")
+                        .HasColumnType("time");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -501,11 +599,13 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Property<DateTime>("CompletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsApprovedByTeacher")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsReshuffled")
                         .HasColumnType("bit");
 
                     b.Property<string>("MediaUrl")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Score")
@@ -579,6 +679,12 @@ namespace LmsApiApp.DataAccess.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsOnline")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastActive")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -851,6 +957,17 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("LmsApiApp.Core.Entities.Answer", b =>
+                {
+                    b.HasOne("LmsApiApp.Core.Entities.Question", "Question")
+                        .WithMany("Answers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
             modelBuilder.Entity("LmsApiApp.Core.Entities.Assignment", b =>
                 {
                     b.HasOne("LmsApiApp.Core.Entities.Course", "Course")
@@ -1035,6 +1152,36 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("LmsApiApp.Core.Entities.Message", b =>
+                {
+                    b.HasOne("LmsApiApp.Core.Entities.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LmsApiApp.Core.Entities.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("LmsApiApp.Core.Entities.Question", b =>
+                {
+                    b.HasOne("LmsApiApp.Core.Entities.Test", "Test")
+                        .WithMany("Questions")
+                        .HasForeignKey("TestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Test");
+                });
+
             modelBuilder.Entity("LmsApiApp.Core.Entities.Test", b =>
                 {
                     b.HasOne("LmsApiApp.Core.Entities.Course", "Course")
@@ -1192,8 +1339,15 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Navigation("GroupEnrollments");
                 });
 
+            modelBuilder.Entity("LmsApiApp.Core.Entities.Question", b =>
+                {
+                    b.Navigation("Answers");
+                });
+
             modelBuilder.Entity("LmsApiApp.Core.Entities.Test", b =>
                 {
+                    b.Navigation("Questions");
+
                     b.Navigation("TestResults");
                 });
 

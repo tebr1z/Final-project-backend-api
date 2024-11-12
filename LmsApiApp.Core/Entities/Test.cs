@@ -11,10 +11,12 @@
         public User User { get; set; }
         public Course Course { get; set; }
         public virtual ICollection<TestResult> TestResults { get; set; }
+        public virtual ICollection<Question> Questions { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public bool IsDelete { get; set; }
-
+        public bool IsDeleted { get; set; }  // Test silindiyse
+        public TimeSpan TestDuration { get; set; }  // Testin toplam süresi
+        public bool IsTimed { get; set; }  // Test süreli mi?
     }
 
 

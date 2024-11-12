@@ -5,6 +5,9 @@ using LmsApiApp.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+using Microsoft.EntityFrameworkCore;
+using LmsApiApp.DataAccess.Data;
+using LmsApiApp.Application.Dtos.UserDtos;
 
 namespace LmsApiApp.Presentation.Controllers
 {
@@ -13,13 +16,16 @@ namespace LmsApiApp.Presentation.Controllers
     [ApiController]
     public class GroupController : ControllerBase
     {
+
+        private readonly LmsApiDbContext _context;
         private readonly IGroupService _groupService;
         private readonly IMapper _mapper;
 
-        public GroupController(IGroupService groupService, IMapper mapper)
+        public GroupController(IGroupService groupService, IMapper mapper, LmsApiDbContext context)
         {
             _groupService = groupService;
             _mapper = mapper;
+            _context = context;
         }
         [HttpGet("with-users")]
         public async Task<ActionResult<IEnumerable<GroupWithUsersDto>>> GetGroupsWithUsers()
@@ -30,10 +36,10 @@ namespace LmsApiApp.Presentation.Controllers
 
         // POST: api/Group
         [HttpPost]
-        [Authorize(Roles = "Admin")] // Sadece Admin rolü ekleyebilir
+     
         public async Task<ActionResult> CreateGroup([FromBody] GroupDto groupDto)
         {
-            // DTO'dan Entity'e mapping
+          
             var groupEntity = _mapper.Map<Group>(groupDto);
 
             await _groupService.AddGroupAsync(groupEntity);
@@ -59,7 +65,7 @@ namespace LmsApiApp.Presentation.Controllers
         }
 
         [HttpPost("users")]
-        // Sadece Admin rolü kullanıcı ekleyebilir
+ 
         public async Task<ActionResult> AddUserToGroup([FromBody] GroupEnrollmentDto groupEnrollmentDto)
         {
             var groupEnrollment = new GroupEnrollment
@@ -123,6 +129,19 @@ namespace LmsApiApp.Presentation.Controllers
 
             return Ok("Grup başarıyla silindi.");
         }
+        [HttpGet("IsUserInGroup/{groupId}/{userId}")]
+        public IActionResult IsUserInGroup(int groupId, string userId)
+        {
+            var enrollment = _context.GroupEnrollments
+                .FirstOrDefault(e => e.GroupId == groupId && e.UserId == userId);
+
+            if (enrollment == null)
+                return NotFound();
+
+            return Ok();
+        }
+    
+
 
     }
 }

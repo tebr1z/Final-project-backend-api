@@ -54,7 +54,7 @@ namespace LmsApiApp.Presentation.Controllers
                 LastName = registeDto.LastName,
               
                 Email = registeDto.Email,
-                Img = registeDto.Img ?? "default.png", // Varsayılan resim
+                Img = registeDto.Img ?? "default.png", 
                 IsDeleted = false,
                 IsBanned = false,
               
@@ -62,7 +62,7 @@ namespace LmsApiApp.Presentation.Controllers
            
             if (string.IsNullOrEmpty(registeDto.UserName))
             {
-                // Logla veya hata mesajı fırlat
+           
                 Console.WriteLine($"UserName: {user.UserName}");
             }
             try
@@ -75,7 +75,7 @@ namespace LmsApiApp.Presentation.Controllers
             }
             catch (Exception ex)
             {
-                // Hata mesajını ve içsel hatayı konsola yazdır
+              
                 Console.WriteLine($"Hata: {ex.Message}");
                 if (ex.InnerException != null)
                 {
@@ -359,6 +359,15 @@ namespace LmsApiApp.Presentation.Controllers
 
 
 
+
+        [HttpPost("logout")]
+        [Authorize]  
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync(); 
+            return Ok(new { message = "Logout successful" });
+        }
+
         [HttpGet("google-callback")]
         public async Task<IActionResult> GoogleCallback()
         {
@@ -409,11 +418,10 @@ namespace LmsApiApp.Presentation.Controllers
             var userRoles = await _userManager.GetRolesAsync(user);
 
 
-            // JWT Token Oluştur
             var token = await _tokenService.CreateTokenAsync(userRoles, user, _jwtSetting);
 
-            // Sadece token'ı döndür
-            return Ok(new { token });
+            var frontendUrl = $"http://localhost:5500?token={token}";
+            return Redirect(frontendUrl);
         }
 
         private string GenerateRandomPassword(int length = 8)

@@ -8,6 +8,7 @@ namespace LmsApiApp.Application.Interfaces
 {
     public interface IEmailService
     {
-        void SendEmail(List<string> to, string subject, string body);
+        Task SendEmail(List<string> to, string subject, string body);
+   
     }
 }

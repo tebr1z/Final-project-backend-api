@@ -17,11 +17,11 @@ public class AttendanceController : ControllerBase
         _userManager = userManager;
     }
 
-    // GET: api/Attendance
+   
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Attendance>>> GetAttendances()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Kullanıcının ID'sini al
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
 
         var attendances = await _attendanceService.GetAllAttendancesAsync(userId);
         return Ok(attendances);
@@ -31,7 +31,7 @@ public class AttendanceController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Attendance>> GetAttendance(int id)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Kullanıcının ID'sini al
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
         var attendance = await _attendanceService.GetAttendanceByIdAsync(id, userId);
 
         if (attendance == null)
@@ -42,7 +42,7 @@ public class AttendanceController : ControllerBase
         return Ok(attendance);
     }
 
-    // POST: api/Attendance (Sadece CourseId ile yoklama oluşturuyoruz)
+   
     [HttpPost]
     public async Task<ActionResult> CreateAttendance([FromBody] int courseId)
     {
@@ -58,7 +58,7 @@ public class AttendanceController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/Attendance/5
+ 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAttendance(int id)
     {

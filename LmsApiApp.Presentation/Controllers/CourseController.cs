@@ -46,7 +46,7 @@ public class CourseController : ControllerBase
             return NotFound();
         }
 
-        // Entity'den DTO'ya dönüşüm yapıyoruz
+       
         var courseDto = _mapper.Map<CourseDto>(courseEntity);
         return Ok(courseDto);
     }
@@ -58,7 +58,6 @@ public class CourseController : ControllerBase
             return BadRequest("Either GroupId or at least one UserId is required.");
         }
 
-        // Eğer bir medya dosyası yüklendiyse
         if (mediaFile != null)
         {
             var mediaUrl = await _fileUploadService.UploadFileAsync(mediaFile);
@@ -67,20 +66,19 @@ public class CourseController : ControllerBase
 
         try
         {
-            // Kursu DTO'dan Entity'ye dönüştürüyoruz
+         
             var courseEntity = _mapper.Map<Course>(courseDto);
             _context.Courses.Add(courseEntity);
-            await _context.SaveChangesAsync(); // Kursu kaydediyoruz ve Id otomatik atanıyor
+            await _context.SaveChangesAsync(); 
 
-            // Eğer GroupId geldiyse, gruptaki kullanıcıları ekleyelim
+         
             if (courseDto.GroupId.HasValue)
             {
                 var groupEnrollments = await _context.GroupEnrollments
-                    .Include(e => e.User) // Kullanıcı bilgilerini dahil ediyoruz
+                    .Include(e => e.User) 
                     .Where(e => e.GroupId == courseDto.GroupId.Value)
                     .ToListAsync();
 
-                // Eğer gruptaki kullanıcılar yoksa hata döndür
                 if (groupEnrollments == null || !groupEnrollments.Any())
                 {
                     return NotFound("No enrollments found for this group.");
@@ -92,16 +90,16 @@ public class CourseController : ControllerBase
                     if (user == null)
                     {
                         Console.WriteLine("User is null, skipping...");
-                        continue; // Kullanıcı yoksa, sonraki kullanıcıya geç
+                        continue; 
                     }
 
-                    // CourseStudents koleksiyonu yoksa oluştur
+                   
                     if (courseEntity.CourseStudents == null)
                     {
                         courseEntity.CourseStudents = new List<CourseStudent>();
                     }
 
-                    // Öğrenci olarak ekleyin
+                 
                     courseEntity.CourseStudents.Add(new CourseStudent
                     {
                         CourseId = courseEntity.Id,
@@ -109,7 +107,7 @@ public class CourseController : ControllerBase
                     });
                 }
 
-                // Değişiklikleri veritabanına kaydet
+               
                 await _context.SaveChangesAsync();
             }
 

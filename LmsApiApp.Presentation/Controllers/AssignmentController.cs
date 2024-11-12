@@ -14,7 +14,7 @@ namespace LmsApiApp.Controllers
     public class AssignmentController : ControllerBase
     {
         private readonly IAssignmentService _assignmentService;
-        private readonly UserManager<User> _userManager;  // IdentityUser yerine User kullanılmalı
+        private readonly UserManager<User> _userManager;  
         private readonly IMapper _mapper;
         private readonly IFileUploadService _fileUploadService;
         private readonly LmsApiDbContext _context;
@@ -22,7 +22,7 @@ namespace LmsApiApp.Controllers
         public AssignmentController(IAssignmentService assignmentService, UserManager<User> userManager, IMapper mapper, IFileUploadService fileUploadService, LmsApiDbContext context)
         {
             _assignmentService = assignmentService;
-            _userManager = userManager;  // IdentityUser yerine User kullanılmalı
+            _userManager = userManager; 
             _mapper = mapper;
             _fileUploadService = fileUploadService;
             _context = context;
@@ -30,7 +30,7 @@ namespace LmsApiApp.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateAssignment([FromForm] AssignmentDto assignmentDto, IFormFile mediaFile)
         {
-            // DTO'dan gelen UserId'yi alıyoruz
+         
             var userId = assignmentDto.UserId;
 
             if (string.IsNullOrEmpty(userId))
@@ -38,7 +38,7 @@ namespace LmsApiApp.Controllers
                 return BadRequest("UserId is required.");
             }
 
-            // UserManager ile UserId'yi kullanarak kullanıcıyı buluyoruz
+           
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
@@ -47,27 +47,27 @@ namespace LmsApiApp.Controllers
 
          
 
-            // DTO'yu model'e dönüştürme
+          
             var assignment = _mapper.Map<Assignment>(assignmentDto);
 
-            // Kullanıcının Id'sini assignment modeline ekliyoruz
+         
             assignment.UserId = userId;
 
-            // CreatedAt ve UpdatedAt tarihlerini burada otomatik olarak ayarlıyoruz
-            assignment.CreatedAt = DateTime.UtcNow;  // Oluşturulma zamanı
-            assignment.UpdatedAt = DateTime.UtcNow;  // İlk oluşturulduğunda güncelleme zamanı da atanır
+            
+            assignment.CreatedAt = DateTime.UtcNow;  
+            assignment.UpdatedAt = DateTime.UtcNow; 
 
-            // Eğer bir medya dosyası yüklendiyse
+         
             if (mediaFile != null)
             {
-                // Dosyayı yükleyip URL'yi alıyoruz
+           
                 var mediaUrl = await _fileUploadService.UploadFileAsync(mediaFile);
 
-                // Medya URL'sini modele ekliyoruz
+               
                 assignment.MediaUrl = mediaUrl;
             }
 
-            // Ödev oluşturuluyor
+        
             await _assignmentService.AddAssignmentAsync(assignment);
 
             return Ok("Assignment created successfully.");
@@ -84,7 +84,7 @@ namespace LmsApiApp.Controllers
                 return NotFound("No assignments found for this course.");
             }
 
-            // DTO'lara dönüştürme
+         
             var assignmentDtos = _mapper.Map<List<AssignmentDto>>(assignments);
             return Ok(assignmentDtos);
         }
@@ -108,35 +108,34 @@ namespace LmsApiApp.Controllers
                 return NotFound("Assignment not found.");
             }
 
-            // Mevcut medya URL'sini sakla
+ 
             var oldMediaUrl = existingAssignment.MediaUrl;
 
-            // Yeni medya dosyası yüklendiyse
+
             if (mediaFile != null)
             {
-                // Eski dosya URL'si varsa sil
+    
                 if (!string.IsNullOrEmpty(oldMediaUrl))
                 {
-                    await _fileUploadService.DeleteFileAsync(oldMediaUrl);  // Eski dosyayı sil
+                    await _fileUploadService.DeleteFileAsync(oldMediaUrl); 
                 }
 
-                // Yeni dosyayı yükle
                 var newMediaUrl = await _fileUploadService.UploadFileAsync(mediaFile);
-                assignmentDto.MediaUrl = newMediaUrl;  // Yeni medya URL'sini DTO'ya ata
+                assignmentDto.MediaUrl = newMediaUrl; 
             }
             else
             {
-                // Eğer yeni medya dosyası yüklenmediyse, eski URL'yi koru
+              
                 assignmentDto.MediaUrl = oldMediaUrl;
             }
 
-            // DTO'yu model'e dönüştürme
+      
             var assignment = _mapper.Map<Assignment>(assignmentDto);
             assignment.Id = id;
             assignment.CreatedAt = existingAssignment.CreatedAt; // CreatedAt'e dokunulmuyor
             assignment.UpdatedAt = DateTime.UtcNow; // UpdatedAt güncelleniyor
 
-            // Ödevi güncelle
+        
             await _assignmentService.UpdateAssignmentAsync(id, assignment);
             return Ok("Assignment updated successfully.");
         }
@@ -167,7 +166,7 @@ namespace LmsApiApp.Controllers
        [HttpPost("grade/{submissionId}")]
 public async Task<IActionResult> GiveGrade(int submissionId, [FromBody] TeacherGradeDto gradeDto)
 {
-    // Ödev teslimini veritabanından alıyoruz
+   
     var submission = await _context.AssignmentSubmissions
         .Include(s => s.Assignment)
         .FirstOrDefaultAsync(s => s.Id == submissionId);
@@ -209,7 +208,7 @@ public async Task<IActionResult> GiveGrade(int submissionId, [FromBody] TeacherG
         // Ortalamayı hesapla
         var averageGrade = allSubmissions.Average(s => s.Grade.Value);
 
-        // Ödevin ortalama grade'ini güncelle
+       
         submission.Assignment.Grade = averageGrade;
 
         _context.Assignments.Update(submission.Assignment);
@@ -221,7 +220,7 @@ public async Task<IActionResult> GiveGrade(int submissionId, [FromBody] TeacherG
         submissionId = submission.Id, 
         grade = submission.Grade, 
         feedback = submission.TeacherFeedback, 
-        averageGrade = submission.Assignment.Grade // Ödevin ortalama grade'ini geri döndürüyoruz
+        averageGrade = submission.Assignment.Grade 
     });
 }
 
