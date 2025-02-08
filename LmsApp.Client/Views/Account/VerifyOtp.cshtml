@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <style>
+        .otp-input {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 20px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .countdown {
+            font-size: 16px;
+            color: red;
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <section class="auth d-flex">
+        <div class="auth-left bg-main-50 flex-center p-24">
+            <img src="assets/images/thumbs/auth-img3.png" alt="OTP Authentication">
+        </div>
+        <div class="auth-right py-40 px-24 flex-center flex-column">
+            <div class="auth-right__inner mx-auto w-100">
+                <h2 class="mb-8">Verify OTP</h2>
+                <p class="text-gray-600 text-15 mb-32">Enter the 6-digit code sent to <span class="fw-medium" id="userEmail"></span></p>
+
+                <form id="otpForm">
+                    <div class="d-flex justify-content-center">
+                        <input type="text" maxlength="1" class="otp-input form-control">
+                        <input type="text" maxlength="1" class="otp-input form-control">
+                        <input type="text" maxlength="1" class="otp-input form-control">
+                        <input type="text" maxlength="1" class="otp-input form-control">
+                        <input type="text" maxlength="1" class="otp-input form-control">
+                        <input type="text" maxlength="1" class="otp-input form-control">
+                    </div>
+                    <p class="countdown mt-3">Time Left: <span id="timer">10:00</span></p>
+
+                    <button type="submit" class="btn btn-main rounded-pill w-100 mt-3">Verify OTP</button>
+                    <p id="errorMessage" class="error-message mt-3"></p>
+                </form>
+
+                <a href="sign-in.html" class="mt-24 text-main-600 flex-align gap-8 justify-content-center">
+                    <i class="ph ph-arrow-left d-flex"></i> Back To Login
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let email = sessionStorage.getItem("userEmail");
+            document.getElementById("userEmail").textContent = email || "your email";
+
+            let inputs = document.querySelectorAll(".otp-input");
+            inputs[0].focus();
+
+            inputs.forEach((input, index) => {
+                input.addEventListener("input", (e) => {
+                    if (e.target.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                });
+
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Backspace" && index > 0 && input.value === "") {
+                        inputs[index - 1].focus();
+                    }
+                });
+            });
+
+            let timerElement = document.getElementById("timer");
+            let timeLeft = 600; // 10 dakika
+
+            let countdown = setInterval(() => {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+                if (timeLeft === 0) {
+                    clearInterval(countdown);
+                    document.getElementById("errorMessage").textContent = "OTP süresi doldu, lütfen tekrar deneyin.";
+                    document.getElementById("errorMessage").style.display = "block";
+                    document.querySelector("button").disabled = true;
+                }
+
+                timeLeft--;
+            }, 1000);
+
+            document.getElementById("otpForm").addEventListener("submit", async function (event) {
+                event.preventDefault();
+
+                let otpCode = Array.from(inputs).map(input => input.value).join("");
+                if (otpCode.length !== 6) {
+                    document.getElementById("errorMessage").textContent = "Lütfen 6 haneli OTP girin.";
+                    document.getElementById("errorMessage").style.display = "block";
+                    return;
+                }
+
+                let response = await fetch("/Account/VerifyOtp", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ otpCode: otpCode })
+                });
+
+                let responseText = await response.text();
+
+                if (response.ok) {
+                    window.location.href = "/Account/ResetPassword";
+                } else {
+                    let errorMessage = response.status === 400
+                        ? "OTP hatalı veya süresi geçmiş!"
+                        : "Sunucu hatası, lütfen tekrar deneyin.";
+
+                    document.getElementById("errorMessage").textContent = responseText || errorMessage;
+                    document.getElementById("errorMessage").style.display = "block";
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

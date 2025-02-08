@@ -34,15 +34,16 @@ app.MapHub<ChatHub>("/chathub");
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+}
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-else
+// Swagger her ortamda aktif olsun
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseExceptionHandler("/Home/Error"); 
-    app.UseHsts();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+    c.RoutePrefix = ""; // Swagger UI'yi kök dizinde göstermek için
+});
+
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseStaticFiles();

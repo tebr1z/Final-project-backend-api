@@ -641,6 +641,12 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Property<int>("AttendancePercentage")
                         .HasColumnType("int");
 
+                    b.Property<string>("BehanceLink")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("BirthDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("ChatRoomId")
                         .HasColumnType("int");
 
@@ -671,7 +677,16 @@ namespace LmsApiApp.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GithubLink")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Img")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InstagramLink")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("IsBanned")
@@ -688,6 +703,9 @@ namespace LmsApiApp.DataAccess.Migrations
 
                     b.Property<string>("LastName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LinkedinLink")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
@@ -719,7 +737,13 @@ namespace LmsApiApp.DataAccess.Migrations
                     b.Property<string>("ResetPasswordOtp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Role")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Skills")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TotalScore")

@@ -130,7 +130,7 @@ namespace LmsApiApp.Presentation
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    Title = "Huquq Api",
+                    Title = "LMS api ",
                     Version = "v1"
                 });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()

@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LmsApp.Client</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/LmsApp.Client.styles.css" asp-append-version="true" />
+
+
+
+
+    <link rel="shortcut icon" href="~/assets/images/logo/favicon.png">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css">
+    <!-- file upload -->
+    <link rel="stylesheet" href="~/assets/css/file-upload.css">
+    <!-- file upload -->
+    <link rel="stylesheet" href="~/assets/css/plyr.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="../2.0.8/css/dataTables.dataTables.min.css">
+    <!-- full calendar -->
+    <link rel="stylesheet" href="~/assets/css/full-calendar.css">
+    <!-- jquery Ui -->
+    <link rel="stylesheet" href="~/assets/css/jquery-ui.css">
+    <!-- editor quill Ui -->
+    <link rel="stylesheet" href="~/assets/css/editor-quill.css">
+    <!-- apex charts Css -->
+    <link rel="stylesheet" href="~/assets/css/apexcharts.css">
+    <!-- calendar Css -->
+    <link rel="stylesheet" href="~/assets/css/calendar.css">
+    <!-- jvector map Css -->
+    <link rel="stylesheet" href="~/assets/css/jquery-jvectormap-2.0.5.css">
+    <!-- Main css -->
+    <link rel="stylesheet" href="~/assets/css/main.css">
+
+
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">LmsApp.Client</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+  
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+
+
+    <!-- Jquery js -->
+    <script src="~/assets/js/jquery-3.7.1.min.js"></script>
+    <!-- Bootstrap Bundle Js -->
+    <script src="~/assets/js/boostrap.bundle.min.js"></script>
+    <!-- Phosphor Js -->
+    <script src="~/assets/js/phosphor-icon.js"></script>
+    <!-- file upload -->
+    <script src="~/assets/js/file-upload.js"></script>
+    <!-- file upload -->
+    <script src="~/assets/js/plyr.js"></script>
+    <!-- dataTables -->
+    <script src="../2.0.8/js/dataTables.min.js"></script>
+    <!-- full calendar -->
+    <script src="~/assets/js/full-calendar.js"></script>
+    <!-- jQuery UI -->
+    <script src="~/assets/js/jquery-ui.js"></script>
+    <!-- jQuery UI -->
+    <script src="~/assets/js/editor-quill.js"></script>
+    <!-- apex charts -->
+    <script src="~/assets/js/apexcharts.min.js"></script>
+    <!-- jvectormap Js -->
+    <script src="~/assets/js/jquery-jvectormap-2.0.5.min.js"></script>
+    <!-- jvectormap world Js -->
+    <script src="~/assets/js/jquery-jvectormap-world-mill-en.js"></script>
+
+    <!-- main js -->
+    <script src="~/assets/js/main.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

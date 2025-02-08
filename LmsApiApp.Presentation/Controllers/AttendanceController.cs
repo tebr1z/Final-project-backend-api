@@ -1,68 +1,130 @@
-﻿using LmsApiApp.Application.Interfaces;
+﻿using Google;
+using LmsApiApp.Application.Dtos.AssignmentDtos;
 using LmsApiApp.Core.Entities;
-using Microsoft.AspNetCore.Identity;
+using LmsApiApp.DataAccess.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
-[Route("api/[controller]")]
+[Route("api/attendance")]
 [ApiController]
+[Authorize]
 public class AttendanceController : ControllerBase
 {
-    private readonly IAttendanceService _attendanceService;
-    private readonly UserManager<User> _userManager;
+    private readonly LmsApiDbContext _context;
 
-    public AttendanceController(IAttendanceService attendanceService, UserManager<User> userManager)
+    public AttendanceController(LmsApiDbContext context)
     {
-        _attendanceService = attendanceService;
-        _userManager = userManager;
+        _context = context;
     }
 
-   
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Attendance>>> GetAttendances()
+    /// <summary>
+    /// Öğrenci yoklamasını kaydetme
+    /// </summary>
+    [HttpPost("mark")]
+    public async Task<IActionResult> MarkAttendance([FromBody] MarkAttendanceDto model)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+        var student = await _context.Users.FindAsync(model.StudentId);
+        if (student == null)
+            return NotFound("Student not found.");
 
-        var attendances = await _attendanceService.GetAllAttendancesAsync(userId);
-        return Ok(attendances);
-    }
+        var course = await _context.Courses.FindAsync(model.CourseId);
+        if (course == null)
+            return NotFound("Course not found.");
 
-    // GET: api/Attendance/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Attendance>> GetAttendance(int id)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
-        var attendance = await _attendanceService.GetAttendanceByIdAsync(id, userId);
-
-        if (attendance == null)
+        var attendance = new Attendance
         {
-            return NotFound();
+            StudentId = model.StudentId,
+            CourseId = model.CourseId,
+            Date = DateTime.UtcNow,
+            IsPresent = model.IsPresent,
+            ExcuseDocument = null
+        };
+
+        _context.Attendances.Add(attendance);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Attendance recorded successfully." });
+    }
+
+    /// <summary>
+    /// Belirli bir kursun tüm yoklamalarını getirir
+    /// </summary>
+    [HttpGet("course/{courseId}")]
+    public async Task<IActionResult> GetAttendanceByCourse(int courseId)
+    {
+        var attendanceRecords = await _context.Attendances
+            .Where(a => a.CourseId == courseId)
+            .Include(a => a.Student)
+            .ToListAsync();
+
+        if (!attendanceRecords.Any())
+            return NotFound("No attendance records found for this course.");
+
+        return Ok(attendanceRecords.Select(a => new
+        {
+            a.Student.FullName,
+            a.Date,
+            a.IsPresent,
+            a.ExcuseDocument
+        }));
+    }
+
+    /// <summary>
+    /// Belirli bir öğrencinin devam durumunu getirir
+    /// </summary>
+    [HttpGet("student/{studentId}")]
+    public async Task<IActionResult> GetStudentAttendance(int studentId)
+    {
+        var attendanceRecords = await _context.Attendances
+            .Where(a => a.StudentId == studentId)
+            .ToListAsync();
+
+        if (!attendanceRecords.Any())
+            return NotFound("No attendance records found for this student.");
+
+        return Ok(attendanceRecords.Select(a => new
+        {
+            a.Date,
+            a.IsPresent,
+            a.ExcuseDocument
+        }));
+    }
+
+    /// <summary>
+    /// Mazaret belgesi yükleme
+    /// </summary>
+    [HttpPost("upload-excuse/{attendanceId}")]
+    public async Task<IActionResult> UploadExcuseDocument(int attendanceId, [FromForm] IFormFile file)
+    {
+        var attendance = await _context.Attendances.FindAsync(attendanceId);
+        if (attendance == null)
+            return NotFound("Attendance record not found.");
+
+        if (file == null || file.Length == 0)
+            return BadRequest("Invalid file.");
+
+        // Dosya adını oluştur ve kaydet
+        string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "excuses");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
         }
 
-        return Ok(attendance);
-    }
+        string filePath = Path.Combine(uploadsFolder, $"{Guid.NewGuid()}_{file.FileName}");
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
 
-   
-    [HttpPost]
-    public async Task<ActionResult> CreateAttendance([FromBody] int courseId)
-    {
-        await _attendanceService.AddAttendanceAsync(courseId);
-        return CreatedAtAction(nameof(GetAttendances), new { message = "Attendance created successfully" });
-    }
+        attendance.ExcuseDocument = filePath;
+        await _context.SaveChangesAsync();
 
-    // PUT: api/Attendance/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateAttendance(int id, [FromBody] Attendance attendance)
-    {
-        await _attendanceService.UpdateAttendanceAsync(id, attendance);
-        return NoContent();
-    }
-
- 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteAttendance(int id)
-    {
-        await _attendanceService.DeleteAttendanceAsync(id);
-        return NoContent();
+        return Ok(new { message = "Excuse document uploaded successfully.", filePath });
     }
 }

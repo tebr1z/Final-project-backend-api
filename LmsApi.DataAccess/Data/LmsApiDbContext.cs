@@ -1,7 +1,7 @@
 ﻿using LmsApiApp.Core.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.Mime.MediaTypeNames;
+
 
 
 namespace LmsApiApp.DataAccess.Data

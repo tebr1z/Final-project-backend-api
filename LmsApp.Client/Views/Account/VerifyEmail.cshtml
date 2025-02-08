@@ -1,0 +1,79 @@
+﻿@{
+    ViewBag.Title = "Verify Email";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email | Edmate Learning</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="~/assets/css/main.css">
+    <style>
+        .verification-container {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="auth d-flex">
+        <div class="auth-left bg-main-50 flex-center p-24">
+            <img src="~/assets/images/thumbs/auth-img4.png" alt="Verify Email">
+        </div>
+        <div class="auth-right py-40 px-24 flex-center flex-column">
+            <div class="auth-right__inner mx-auto w-100">
+                <a href="/" class="auth-right__logo">
+                    <img src="~/assets/images/logo/logo.png" alt="Logo">
+                </a>
+                <h2 class="mb-8">Email Verification</h2>
+
+                <p class="text-gray-600 text-15 mb-32">
+                    @if (ViewBag.Success == true)
+                    {
+                        <span class="success">✅ Your email has been successfully verified!</span>
+                    }
+                    else
+                    {
+                        <span class="error">❌ Email verification failed. The link may have expired.</span>
+                    }
+                </p>
+
+                @if (ViewBag.Success == true)
+                {
+                    <a href="@Url.Action("Login", "Account")" class="btn btn-main rounded-pill w-100">Go to Login</a>
+                }
+                else
+                {
+                    <a href="@Url.Action("Register", "Account")" class="btn btn-danger rounded-pill w-100">Try Again</a>
+                }
+
+                <p class="mt-32 text-gray-600 text-center">
+                    Didn't get the mail?
+                    <a href="@Url.Action("ResendEmail", "Account")" class="text-main-600 hover-text-decoration-underline">Resend</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="~/assets/js/jquery-3.7.1.min.js"></script>
+    <script src="~/assets/js/boostrap.bundle.min.js"></script>
+
+</body>
+</html>

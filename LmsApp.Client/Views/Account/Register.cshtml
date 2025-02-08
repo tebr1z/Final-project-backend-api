@@ -1,0 +1,182 @@
+﻿@model RegisterViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Edmate Learning</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="~/assets/css/bootstrap.min.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="~/assets/css/main.css">
+    <style>
+        .valid-feedback {
+            color: #28a745;
+            display: none;
+        }
+
+        .invalid-feedback {
+            color: #dc3545;
+            display: none;
+        }
+
+        input:valid ~ .valid-feedback {
+            display: block;
+        }
+
+        input:invalid ~ .invalid-feedback {
+            display: block;
+        }
+
+        .disabled {
+            background-color: #cccccc;
+            pointer-events: none;
+        }
+
+        /* Şifre gereksinimleri listesi */
+        .password-rules {
+            font-size: 14px;
+            color: #dc3545;
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+            .password-rules li.valid {
+                color: #28a745;
+            }
+    </style>
+</head>
+
+<body>
+    <section class="auth d-flex">
+        <div class="auth-left bg-main-50 flex-center p-24">
+            <img src="~/assets/images/thumbs/auth-img2.png" alt="Registration">
+        </div>
+        <div class="auth-right py-40 px-24 flex-center flex-column">
+            <div class="auth-right__inner mx-auto w-100">
+                <a href="index.html" class="auth-right__logo">
+                    <img src="~/assets/images/logo/logo.png" alt="Logo">
+                </a>
+                <h2 class="mb-8">Sign Up</h2>
+                <p class="text-gray-600 text-15 mb-32">Please sign up to your account and start the adventure</p>
+
+                <form asp-action="Register" method="post" id="registerForm" novalidate>
+                    <div class="mb-24">
+                        <label class="form-label">Full Name</label>
+                        <input asp-for="FullName" class="form-control required-field" required>
+                    </div>
+
+                    <div class="mb-24">
+                        <label class="form-label">Last Name</label>
+                        <input asp-for="LastName" class="form-control required-field" required>
+                    </div>
+
+                    <div class="mb-24">
+                        <label class="form-label">Username</label>
+                        <input asp-for="UserName" class="form-control required-field" required>
+                    </div>
+
+                    <div class="mb-24">
+                        <label class="form-label">Email</label>
+                        <input asp-for="Email" type="email" class="form-control required-field" required>
+                    </div>
+
+                    <!-- Şifre alanı ve kurallar -->
+                    <div class="mb-24">
+                        <label class="form-label">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" id="password" required minlength="8">
+                        <ul class="password-rules mt-2">
+                            <li id="rule-length">❌ At least 8 characters</li>
+                            <li id="rule-uppercase">❌ At least one uppercase letter</li>
+                            <li id="rule-lowercase">❌ At least one lowercase letter</li>
+                            <li id="rule-number">❌ At least one number</li>
+                            <li id="rule-special">❌ At least one special character (!.#$)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Şifre Tekrar -->
+                    <div class="mb-24">
+                        <label class="form-label">Confirm Password</label>
+                        <input asp-for="RePassword" type="password" class="form-control" id="repassword" required>
+                        <span class="valid-feedback" id="passwordMatchValid">✔️ Passwords match!</span>
+                        <span class="invalid-feedback" id="passwordMatchInvalid">❌ Passwords do not match.</span>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-main rounded-pill w-100 disabled">Sign Up</button>
+
+                    <p class="mt-32 text-gray-600 text-center">
+                        Already have an account? <a href="Login" class="text-main-600 hover-text-decoration-underline">Log In</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+
+    </section>
+
+    <!-- Scripts -->
+    <script src="~/assets/js/jquery-3.7.1.min.js"></script>
+    <script src="~/assets/js/boostrap.bundle.min.js"></script>
+    <script src="~/assets/js/main.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let password = document.getElementById("password");
+            let repassword = document.getElementById("repassword");
+            let submitBtn = document.getElementById("submitBtn");
+
+            let ruleLength = document.getElementById("rule-length");
+            let ruleUppercase = document.getElementById("rule-uppercase");
+            let ruleLowercase = document.getElementById("rule-lowercase");
+            let ruleNumber = document.getElementById("rule-number");
+            let ruleSpecial = document.getElementById("rule-special");
+
+            function validatePassword() {
+                let value = password.value;
+                let hasUppercase = /[A-Z]/.test(value);
+                let hasLowercase = /[a-z]/.test(value);
+                let hasNumber = /\d/.test(value);
+                let hasSpecialChar = /[!.#$]/.test(value);
+                let hasMinLength = value.length >= 8;
+
+                ruleLength.textContent = hasMinLength ? "✔️ At least 8 characters" : "❌ At least 8 characters";
+                ruleUppercase.textContent = hasUppercase ? "✔️ At least one uppercase letter" : "❌ At least one uppercase letter";
+                ruleLowercase.textContent = hasLowercase ? "✔️ At least one lowercase letter" : "❌ At least one lowercase letter";
+                ruleNumber.textContent = hasNumber ? "✔️ At least one number" : "❌ At least one number";
+                ruleSpecial.textContent = hasSpecialChar ? "✔️ At least one special character (!.#$)" : "❌ At least one special character (!.#$)";
+
+                ruleLength.classList.toggle("valid", hasMinLength);
+                ruleUppercase.classList.toggle("valid", hasUppercase);
+                ruleLowercase.classList.toggle("valid", hasLowercase);
+                ruleNumber.classList.toggle("valid", hasNumber);
+                ruleSpecial.classList.toggle("valid", hasSpecialChar);
+
+                return hasUppercase && hasLowercase && hasNumber && hasSpecialChar && hasMinLength;
+            }
+
+            function checkFormValidity() {
+                let allFilled = [...document.querySelectorAll('.required-field')].every(input => input.value.trim() !== '');
+                let passwordValid = validatePassword();
+                let passwordsMatch = password.value === repassword.value;
+
+                document.getElementById("passwordMatchValid").style.display = passwordsMatch ? "block" : "none";
+                document.getElementById("passwordMatchInvalid").style.display = passwordsMatch ? "none" : "block";
+
+                if (allFilled && passwordValid && passwordsMatch) {
+                    submitBtn.classList.remove("disabled");
+                } else {
+                    submitBtn.classList.add("disabled");
+                }
+            }
+
+            password.addEventListener("input", checkFormValidity);
+            repassword.addEventListener("input", checkFormValidity);
+            document.querySelectorAll('.required-field').forEach(input => input.addEventListener("input", checkFormValidity));
+        });
+    </script>
+
+</body>
+</html>

@@ -140,7 +140,39 @@ namespace LmsApiApp.Presentation.Controllers
 
             return Ok();
         }
-    
+        [HttpGet("get-user-groups")]
+        public IActionResult GetUserGroups()
+        {
+            try
+            {
+                
+                var userId = User.FindFirst("id")?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized("Failed to retrieve user ID.");
+
+       
+                var userGroups = _context.GroupEnrollments
+                    .Where(e => e.UserId == userId)
+                    .Select(e => new
+                    {
+                        e.GroupId,
+                       
+                    })
+                    .ToList();
+
+                if (!userGroups.Any())
+                    return NotFound("User is not included in any groups.");
+
+                return Ok(userGroups);
+            }
+            catch (Exception ex)
+            {
+               
+                return StatusCode(500, $"server 500 {ex.Message}");
+            }
+        }
+
 
 
     }

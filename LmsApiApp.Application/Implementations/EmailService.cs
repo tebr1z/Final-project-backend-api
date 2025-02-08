@@ -6,38 +6,42 @@ using System.Net.Mail;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using MimeKit;
 
 namespace LmsApiApp.Application.Implementations
 {
     public class EmailService : IEmailService
     {
-        public async Task SendEmail(List<string> emails, string subject, string body)
+        public void SendEmail(List<string> emails, string subject, string body)
         {
-            MailMessage mailMessage = new MailMessage();
-            mailMessage.From = new MailAddress("tabrizyh@code.edu.az", "Lms APP");
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Thon Software", "noreply@thonsoftware.com"));
             foreach (var email in emails)
             {
-                mailMessage.To.Add(email);
+                message.To.Add(new MailboxAddress(email, email));
             }
-            mailMessage.Subject = subject;
-            mailMessage.IsBodyHtml = true;
-            mailMessage.Body = body;
+            message.Subject = subject;
 
-            SmtpClient smtpClient = new SmtpClient();
-            smtpClient.Host = "smtp.gmail.com";
-            smtpClient.Port = 587;
-            smtpClient.EnableSsl = true;
-            smtpClient.Credentials = new NetworkCredential("tabrizyh@code.edu.az", "hacc owpo nqwl mpiu\r\n"); // Google giris password
+            var bodyBuilder = new BodyBuilder { HtmlBody = body };
+            message.Body = bodyBuilder.ToMessageBody();
 
-
-            try
+            using (MailKit.Net.Smtp.SmtpClient client = new MailKit.Net.Smtp.SmtpClient())
             {
-                smtpClient.Send(mailMessage);
-                Console.WriteLine("Email Sent Successfully.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
+                try
+                {
+                    client.Connect("mail.thonsoftware.com", 465, true);
+                    client.Authenticate("noreply@thonsoftware.com", "Thonsoftware005!");
+                    client.Send(message);
+                    Console.WriteLine("Email sent successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error sending email: " + ex.Message);
+                }
+                finally
+                {
+                    client.Disconnect(true);
+                }
             }
         }
     }

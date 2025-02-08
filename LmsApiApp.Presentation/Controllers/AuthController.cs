@@ -34,37 +34,28 @@ namespace LmsApiApp.Presentation.Controllers
             _signInManager = signInManager;
         }
 
-
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto registeDto)
         {
             if (!ModelState.IsValid)
             {
-
                 return BadRequest(ModelState);
             }
-         
 
             User user = await _userManager.FindByNameAsync(registeDto.UserName);
             if (user != null) return Conflict();
+
             user = new()
             {
                 UserName = registeDto.UserName,
                 FullName = registeDto.FullName,
                 LastName = registeDto.LastName,
-              
                 Email = registeDto.Email,
-                Img = registeDto.Img ?? "default.png", 
+                Img = registeDto.Img ?? "default.png",
                 IsDeleted = false,
                 IsBanned = false,
-              
             };
-           
-            if (string.IsNullOrEmpty(registeDto.UserName))
-            {
-           
-                Console.WriteLine($"UserName: {user.UserName}");
-            }
+
             try
             {
                 IdentityResult result = await _userManager.CreateAsync(user, registeDto.Password);
@@ -75,7 +66,6 @@ namespace LmsApiApp.Presentation.Controllers
             }
             catch (Exception ex)
             {
-              
                 Console.WriteLine($"Hata: {ex.Message}");
                 if (ex.InnerException != null)
                 {
@@ -84,15 +74,14 @@ namespace LmsApiApp.Presentation.Controllers
                 return StatusCode(500, "Sunucu hatası. Lütfen tekrar deneyin.");
             }
 
-
-
-
-
-
+            // Token oluştur
             string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            string link = Url.Action(nameof(VerifyEamil), "Auth", new { email = user.Email, token = token },
-                Request.Scheme, Request.Host.ToString());
 
+            // **MVC'nin doğrulama sayfasına yönlendirilen email linki**
+            string mvcBaseUrl = "https://localhost:7255"; // **MVC Projesinin Çalıştığı Portu Gir**
+            string link = $"{mvcBaseUrl}/Account/VerifyEmail?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(token)}";
+
+            // Email içeriğini yükle
             string body = string.Empty;
             using (StreamReader stream = new StreamReader("wwwroot/template/verifyEmailTemplate.html"))
             {
@@ -101,12 +90,12 @@ namespace LmsApiApp.Presentation.Controllers
             body = body.Replace("{{link}}", link);
             body = body.Replace("{{username}}", user.UserName);
 
-            _emailService.SendEmail(new List<string>() { user.Email }, "verify Email", body);
-
-
+            // Email gönder
+            _emailService.SendEmail(new List<string>() { user.Email }, "Verify Email", body);
 
             return Ok();
         }
+
 
 
 
@@ -129,6 +118,40 @@ namespace LmsApiApp.Presentation.Controllers
 
 
 
+        [Authorize]
+        [HttpPut("edit-profile")]
+        public async Task<IActionResult> EditProfile(EditProfileDto profileDto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            User user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound("User not found.");
+
+            user.FullName = profileDto.FullName ?? user.FullName;
+            user.LastName = profileDto.LastName ?? user.LastName;
+            user.Img = profileDto.Img ?? user.Img;
+            user.Role = profileDto.Role ?? user.Role;
+            user.Skills = profileDto.Skills ?? user.Skills;
+            user.Gender = profileDto.Gender ?? user.Gender;
+            user.BirthDate = profileDto.BirthDate ?? user.BirthDate;
+            user.InstagramLink = profileDto.InstagramLink ?? user.InstagramLink;
+            user.LinkedinLink = profileDto.LinkedinLink ?? user.LinkedinLink;
+            user.GithubLink = profileDto.GithubLink ?? user.GithubLink;
+            user.BehanceLink = profileDto.BehanceLink ?? user.BehanceLink;
+            user.UpdatedDate = DateTime.UtcNow;
+
+            IdentityResult result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok(new { message = "Profile updated successfully." });
+        }
 
 
 
@@ -169,6 +192,33 @@ namespace LmsApiApp.Presentation.Controllers
         }
 
 
+        [HttpPost("verifyOtp")]
+        public async Task<IActionResult> VerifyOtp(string email, string otpCode)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return NotFound(new { error = "User not found" });
+            }
+
+            if (string.IsNullOrEmpty(user.ResetPasswordOtp) || user.OtpExpiryTime == null)
+            {
+                return BadRequest(new { error = "OTP has not been set or is invalid" });
+            }
+
+            if (user.ResetPasswordOtp != otpCode)
+            {
+                return BadRequest(new { error = "Invalid OTP code" });
+            }
+
+            if (DateTime.UtcNow > user.OtpExpiryTime)
+            {
+                return BadRequest(new { error = "OTP has expired" });
+            }
+
+            return Ok(new { message = "OTP is valid" });
+        }
+
 
 
         [HttpPost("resetPasswordWithOtp")]
@@ -206,34 +256,7 @@ namespace LmsApiApp.Presentation.Controllers
         }
 
 
-        [HttpPost("verifyOtp")]
-        public async Task<IActionResult> VerifyOtp(string email, string otpCode)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return NotFound(new { error = "User not found" });
-            }
-
-            if (string.IsNullOrEmpty(user.ResetPasswordOtp) || user.OtpExpiryTime == null)
-            {
-                return BadRequest(new { error = "OTP has not been set or is invalid" });
-            }
-
-            if (user.ResetPasswordOtp != otpCode)
-            {
-                return BadRequest(new { error = "Invalid OTP code" });
-            }
-
-            if (DateTime.UtcNow > user.OtpExpiryTime)
-            {
-                return BadRequest(new { error = "OTP has expired" });
-            }
-
-            return Ok(new { message = "OTP is valid" });
-        }
-
-
+       
 
 
 

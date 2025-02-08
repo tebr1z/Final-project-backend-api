@@ -91,7 +91,7 @@ namespace LmsApiApp.Application.Services
                 var subject = "Yeni Mesaj Bildirimi";
                 var body = $"Merhaba {user.FullName}, yeni bir mesaj aldınız: {message.Content}";
                 // E-posta adresini List<string> olarak gönderiyoruz
-                await _emailService.SendEmail(new List<string> { user.Email }, subject, body);
+                 _emailService.SendEmail(new List<string> { user.Email }, subject, body);
             }
         }
 
